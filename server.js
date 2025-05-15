@@ -1,39 +1,31 @@
 const express = require("express");
-const QRCode = require("qrcode");
 const path = require("path");
+const QRCode = require("qrcode");
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Serve static files (like HTML, CSS, and JS)
-app.use(express.static(path.join(__dirname, "public")));
-
-// Parse incoming data (JSON)
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public"))); // Serve static files
 
-// Route to generate Wi-Fi QR Code
-app.post("/generate-qr", (req, res) => {
+// Endpoint to generate QR code
+app.post("/generate-qr", async (req, res) => {
   const { ssid, password } = req.body;
+  const wifiData = `WIFI:T:WPA;S:${ssid};P:${password};;`;
 
-  // Validate inputs
-  if (!ssid || !password) {
-    return res.status(400).send({ error: "SSID and password are required!" });
+  try {
+    const qr = await QRCode.toDataURL(wifiData);
+    res.json({ qr });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate QR code" });
   }
-
-  // Format Wi-Fi data as QR code string
-  const qrData = `WIFI:T:WPA;S:${ssid};P:${password};;`;
-
-  // Generate QR code
-  QRCode.toDataURL(qrData, (err, qrCodeUrl) => {
-    if (err) {
-      return res.status(500).send({ error: "Failed to generate QR code" });
-    }
-    // Send the generated QR code as the response
-    res.send({ qrCodeUrl });
-  });
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// Serve index.html for all other routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
