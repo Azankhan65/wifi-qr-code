@@ -130,44 +130,47 @@
       <div id="qrCode"></div>
     </div>
 
-    <script>
-      function generateQRCode() {
-        var ssid = document.getElementById("wifiName").value;
-        var password = document.getElementById("wifiPassword").value;
+<script>
+  function generateQRCode() {
+    var ssid = document.getElementById("wifiName").value;
+    var password = document.getElementById("wifiPassword").value;
 
-        if (!ssid || !password) {
-          alert("Please enter both WiFi name and password!");
-          return;
+    if (!ssid || !password) {
+      alert("Please enter both WiFi name and password!");
+      return;
+    }
+
+    // Send request to backend to generate QR code
+    fetch("/api/generate-qr", {  // Note: use /api/generate-qr to match Vercel serverless function
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ssid, password }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.qr) {
+          // Display the QR code with fade-in effect
+          var qrCodeImage = new Image();
+          qrCodeImage.src = data.qr;
+          var qrContainer = document.getElementById("qrCode");
+          qrContainer.innerHTML = ""; // Clear previous content
+          qrContainer.appendChild(qrCodeImage);
+
+          // Add the fade-in animation
+          setTimeout(function () {
+            qrContainer.classList.add("show");
+          }, 100);
+        } else if (data.error) {
+          alert("Error: " + data.error);
         }
+      })
+      .catch((error) => {
+        alert("Error generating QR code: " + error);
+      });
+  }
+</script>
 
-        // Send request to backend to generate QR code
-        fetch("/generate-qr", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ssid, password }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.qrCodeUrl) {
-              // Display the QR code with fade-in effect
-              var qrCodeImage = new Image();
-              qrCodeImage.src = data.qrCodeUrl;
-              var qrContainer = document.getElementById("qrCode");
-              qrContainer.innerHTML = ""; // Clear previous content
-              qrContainer.appendChild(qrCodeImage);
-
-              // Add the fade-in animation
-              setTimeout(function () {
-                qrContainer.classList.add("show");
-              }, 100);
-            }
-          })
-          .catch((error) => {
-            alert("Error generating QR code: " + error);
-          });
-      }
-    </script>
   </body>
 </html>
