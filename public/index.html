@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WiFi QR Code Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <style>
+      /* General reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f0f0f0, #f8e0d7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden;
+        color: #333;
+      }
+
+      .container {
+        text-align: center;
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        padding: 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      /* Hover effect on container */
+      .container:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        color: #ff6f61; /* A soft coral color for the heading */
+        letter-spacing: 1px;
+        transition: color 0.3s ease;
+      }
+
+      h2:hover {
+        color: #333;
+      }
+
+      input {
+        width: 80%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: border 0.3s ease, transform 0.3s ease;
+      }
+
+      input:focus {
+        outline: none;
+        border: 2px solid #ff6f61; /* Match the button color */
+        transform: scale(1.05);
+      }
+
+      button {
+        width: 80%;
+        padding: 12px;
+        background-color: #ff6f61; /* Coral color */
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #e75b4f; /* Darker coral on hover */
+        transform: scale(1.05);
+      }
+
+      #qrCode {
+        margin-top: 30px;
+        transition: opacity 0.5s ease;
+        opacity: 0;
+      }
+
+      /* Animation for the QR code */
+      #qrCode.show {
+        opacity: 1;
+      }
+
+      /* Add responsive design for smaller screens */
+      @media (max-width: 600px) {
+        .container {
+          padding: 20px;
+        }
+
+        input,
+        button {
+          width: 90%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>WiFi QR Code Generator</h2>
+      <input
+        type="text"
+        id="wifiName"
+        placeholder="Enter WiFi Name (SSID)"
+        required
+      />
+      <input
+        type="password"
+        id="wifiPassword"
+        placeholder="Enter WiFi Password"
+        required
+      />
+      <button onclick="generateQRCode()">Generate QR Code</button>
+      <div id="qrCode"></div>
+    </div>
+
+    <script>
+      function generateQRCode() {
+        var ssid = document.getElementById("wifiName").value;
+        var password = document.getElementById("wifiPassword").value;
+
+        if (!ssid || !password) {
+          alert("Please enter both WiFi name and password!");
+          return;
+        }
+
+        // Send request to backend to generate QR code
+        fetch("/generate-qr", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ssid, password }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.qrCodeUrl) {
+              // Display the QR code with fade-in effect
+              var qrCodeImage = new Image();
+              qrCodeImage.src = data.qrCodeUrl;
+              var qrContainer = document.getElementById("qrCode");
+              qrContainer.innerHTML = ""; // Clear previous content
+              qrContainer.appendChild(qrCodeImage);
+
+              // Add the fade-in animation
+              setTimeout(function () {
+                qrContainer.classList.add("show");
+              }, 100);
+            }
+          })
+          .catch((error) => {
+            alert("Error generating QR code: " + error);
+          });
+      }
+    </script>
+  </body>
+</html>
